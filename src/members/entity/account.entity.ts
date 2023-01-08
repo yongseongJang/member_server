@@ -61,4 +61,21 @@ export class Account {
 
   @OneToMany(() => Token, (tokens) => tokens._id, { cascade: true })
   tokens: Token[];
+
+  static from(
+    id: string,
+    pw: string,
+    name: string,
+    address: string,
+    cellularPhone: string,
+  ) {
+    const account = new Account();
+    account.id = id;
+    account.pw = pw;
+    account.name = name;
+    account.address = address;
+    account.cellularPhone = cellularPhone;
+
+    return account;
+  }
 }
