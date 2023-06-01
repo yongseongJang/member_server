@@ -18,13 +18,14 @@ export class LoggerMiddleware implements NestMiddleware {
       const { statusCode } = res;
 
       if (statusCode >= 400) {
-      	winstonLogger.error(
-      	  `${method} ${originalUrl} ${statusCode} ${ip} ${userAgent}`,
-      	);
+        winstonLogger.error(
+          `${method} ${originalUrl} ${statusCode} ${ip} ${userAgent}`,
+        );
       } else if (statusCode >= 200) {
-      	winstonLogger.log(
-      	  'info', `${method} ${originalUrl} ${statusCode} ${ip} ${userAgent}`,
-      	);
+        winstonLogger.log(
+          'info',
+          `${method} ${originalUrl} ${statusCode} ${ip} ${userAgent}`,
+        );
       }
     });
 
