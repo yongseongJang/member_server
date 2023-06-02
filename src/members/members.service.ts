@@ -5,14 +5,14 @@ import * as bcrypt from 'bcrypt';
 import { v4 } from 'uuid';
 import { Account } from './entity';
 import { RedisService } from 'src/redis.service';
-import { AuthService } from 'src/auth/auth.service';
+import { JwtService } from '@nestjs/jwt';
 
 @Injectable()
 export class MembersService {
   constructor(
     private accountRepository: AccountRepository,
-    private authService: AuthService,
     private redisService: RedisService,
+    private jwtService: JwtService,
   ) {}
 
   async registerAccount(registerAccountDto: RegisterAccountDto): Promise<void> {
@@ -42,7 +42,7 @@ export class MembersService {
 
       await this.comparePasswordToHash(loginDto.getPw(), userInfo.pw);
 
-      const accessToken = await this.authService.createToken(userInfo);
+      const accessToken = await this.jwtService.signAsync({ ...userInfo });
       const refreshToken = v4();
       await this.redisService.set(
         loginDto.getId(),
