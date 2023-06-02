@@ -8,11 +8,14 @@ import {
   Body,
   HttpException,
   HttpStatus,
+  Req,
   Res,
+  UseGuards,
 } from '@nestjs/common';
-import { Response } from 'express';
+import { Request, Response } from 'express';
 import { MembersService } from './members.service';
 import { RegisterAccountDto, LoginDto } from './dto';
+import { AuthGuard } from '../guards/auth.guard';
 
 @Controller('/api/members')
 export class MembersController {
@@ -55,6 +58,27 @@ export class MembersController {
           error: 'fail to login',
         },
         HttpStatus.BAD_REQUEST,
+      );
+    }
+  }
+
+  @UseGuards(AuthGuard)
+  @Get('/logout')
+  async logout(@Req() req: Request, @Res() res: Response) {
+    try {
+      await this.membersService.logout(req['user'].id);
+
+      res.clearCookie('RefreshToken');
+      res.clearCookie('AccessToken');
+
+      return res.status(HttpStatus.OK).send();
+    } catch (err) {
+      throw new HttpException(
+        {
+          status: HttpStatus.INTERNAL_SERVER_ERROR,
+          error: 'fail to logout',
+        },
+        HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
   }

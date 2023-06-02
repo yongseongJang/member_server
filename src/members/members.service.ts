@@ -56,6 +56,14 @@ export class MembersService {
     }
   }
 
+  async logout(id: string): Promise<void> {
+    try {
+      await this.redisService.del(id);
+    } catch (err) {
+      throw err;
+    }
+  }
+
   private async checkIdDuplication(id: string): Promise<void> {
     try {
       const accountInfo = await this.accountRepository.readUserInfoById(id);
