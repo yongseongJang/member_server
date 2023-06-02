@@ -1,5 +1,5 @@
 import { Entity, PrimaryColumn, Column, ManyToMany, OneToMany } from 'typeorm';
-import { Role, Token } from '.';
+import { Role } from '.';
 
 @Entity()
 export class Account {
@@ -58,9 +58,6 @@ export class Account {
 
   @ManyToMany((type) => Role, (roles) => roles._id, { cascade: true })
   roles: Role[];
-
-  @OneToMany(() => Token, (tokens) => tokens._id, { cascade: true })
-  tokens: Token[];
 
   static from(
     id: string,

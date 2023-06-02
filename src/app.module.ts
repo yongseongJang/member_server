@@ -2,6 +2,7 @@ import { Module, NestModule, MiddlewareConsumer } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { DatabaseModule } from './database.module';
 import { MembersModule } from './members/members.module';
+import { RedisModule } from './redis.module';
 
 import * as path from 'path';
 import { LoggerMiddleware } from './middlewares';
@@ -20,6 +21,7 @@ const envFileName =
       envFilePath: path.resolve(__dirname, `../${envFileName}`),
     }),
     DatabaseModule,
+    RedisModule,
     MembersModule,
   ],
 })

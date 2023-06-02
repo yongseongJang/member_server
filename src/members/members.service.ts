@@ -5,10 +5,14 @@ import * as bcrypt from 'bcrypt';
 import * as jwt from 'jsonwebtoken';
 import { v4 } from 'uuid';
 import { Account } from './entity';
+import { RedisService } from 'src/redis.service';
 
 @Injectable()
 export class MembersService {
-  constructor(private accountRepository: AccountRepository) {}
+  constructor(
+    private accountRepository: AccountRepository,
+    private redisService: RedisService,
+  ) {}
 
   async registerAccount(registerAccountDto: RegisterAccountDto): Promise<void> {
     try {
@@ -39,12 +43,12 @@ export class MembersService {
 
       await this.comparePasswordToHash(loginDto.getPw(), userInfo.pw);
 
-      const refreshToken = v4();
       const accessToken = await this.getToken(loginDto.getId());
-
-      await this.accountRepository.createRefreshToken(
-        refreshToken,
+      const refreshToken = v4();
+      await this.redisService.set(
         loginDto.getId(),
+        refreshToken,
+        14 * 24 * 60 * 60,
       );
 
       return { refreshToken, accessToken };

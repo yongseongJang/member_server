@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { DataSource } from 'typeorm';
-import { Account, Token } from '../entity';
+import { Account } from '../entity';
 
 @Injectable()
 export class AccountRepository {
@@ -26,16 +26,6 @@ export class AccountRepository {
           select: selectOptions,
           where: { id },
         });
-      });
-    } catch (err) {
-      throw err;
-    }
-  }
-
-  async createRefreshToken(refreshToken: string, id: string): Promise<void> {
-    try {
-      await this.dataSource.transaction(async (manager) => {
-        await manager.insert(Token, Token.from(refreshToken, id));
       });
     } catch (err) {
       throw err;
