@@ -2,15 +2,16 @@ import { Injectable } from '@nestjs/common';
 import { AccountRepository } from './repositories';
 import { LoginDto, RegisterAccountDto } from './dto';
 import * as bcrypt from 'bcrypt';
-import * as jwt from 'jsonwebtoken';
 import { v4 } from 'uuid';
 import { Account } from './entity';
 import { RedisService } from 'src/redis.service';
+import { AuthService } from 'src/auth/auth.service';
 
 @Injectable()
 export class MembersService {
   constructor(
     private accountRepository: AccountRepository,
+    private authService: AuthService,
     private redisService: RedisService,
   ) {}
 
@@ -33,9 +34,7 @@ export class MembersService {
   ): Promise<{ refreshToken: string; accessToken: string }> {
     try {
       const userInfo: Account | null =
-        await this.accountRepository.readUserInfoById(loginDto.getId(), {
-          pw: true,
-        });
+        await this.accountRepository.readUserInfoById(loginDto.getId());
 
       if (!userInfo) {
         throw new Error('Invalid Id');
@@ -43,7 +42,7 @@ export class MembersService {
 
       await this.comparePasswordToHash(loginDto.getPw(), userInfo.pw);
 
-      const accessToken = await this.getToken(loginDto.getId());
+      const accessToken = await this.authService.createToken(userInfo);
       const refreshToken = v4();
       await this.redisService.set(
         loginDto.getId(),
@@ -53,7 +52,6 @@ export class MembersService {
 
       return { refreshToken, accessToken };
     } catch (err) {
-      console.log(err);
       throw err;
     }
   }
@@ -95,25 +93,6 @@ export class MembersService {
         .catch((err) => {
           reject(new Error(err.message));
         });
-    });
-  }
-
-  private getToken(id: string): Promise<string> {
-    return new Promise((resolve, reject) => {
-      jwt.sign(
-        { id },
-        process.env.PRIVATEKEY || 'privatekey',
-        {
-          expiresIn: 1800000,
-        },
-        (err: null | Error, token: string | undefined) => {
-          if (err) {
-            reject(new Error('fail to make token'));
-          } else {
-            resolve(token);
-          }
-        },
-      );
     });
   }
 }
