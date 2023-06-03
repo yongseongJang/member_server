@@ -39,10 +39,13 @@ export class MembersController {
   @Post('/login')
   async login(@Body() loginDto: LoginDto, @Res() res: Response) {
     try {
-      const { refreshToken, accessToken } = await this.membersService.login(
+      const { id, refreshToken, accessToken } = await this.membersService.login(
         loginDto,
       );
 
+      res.cookie('UserId', id, {
+        httpOnly: true,
+      });
       res.cookie('RefreshToken', refreshToken, {
         httpOnly: true,
       });
@@ -68,6 +71,7 @@ export class MembersController {
     try {
       await this.membersService.logout(req['user'].id);
 
+      res.clearCookie('UserId');
       res.clearCookie('RefreshToken');
       res.clearCookie('AccessToken');
 

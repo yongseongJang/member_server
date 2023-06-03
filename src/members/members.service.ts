@@ -31,14 +31,9 @@ export class MembersService {
 
   async login(
     loginDto: LoginDto,
-  ): Promise<{ refreshToken: string; accessToken: string }> {
+  ): Promise<{ id: string; refreshToken: string; accessToken: string }> {
     try {
-      const userInfo: Account | null =
-        await this.accountRepository.readUserInfoById(loginDto.getId());
-
-      if (!userInfo) {
-        throw new Error('Invalid Id');
-      }
+      const userInfo = await this.getUserInfoById(loginDto.getId());
 
       await this.comparePasswordToHash(loginDto.getPw(), userInfo.pw);
 
@@ -50,7 +45,7 @@ export class MembersService {
         14 * 24 * 60 * 60,
       );
 
-      return { refreshToken, accessToken };
+      return { id: userInfo.id, refreshToken, accessToken };
     } catch (err) {
       throw err;
     }
@@ -59,6 +54,21 @@ export class MembersService {
   async logout(id: string): Promise<void> {
     try {
       await this.redisService.del(id);
+    } catch (err) {
+      throw err;
+    }
+  }
+
+  async getUserInfoById(id: string): Promise<Account> {
+    try {
+      const userInfo: Account | null =
+        await this.accountRepository.readUserInfoById(id);
+
+      if (!userInfo) {
+        throw new Error('Invalid Id');
+      }
+
+      return userInfo;
     } catch (err) {
       throw err;
     }
