@@ -59,6 +59,20 @@ export class MembersService {
     }
   }
 
+  async deleteAccount(id: string, pw: string): Promise<void> {
+    try {
+      await this.redisService.del(id);
+
+      const userInfo = await this.getUserInfoById(id);
+
+      await this.comparePasswordToHash(pw, userInfo.pw);
+
+      await this.accountRepository.deleteAccount(id);
+    } catch (err) {
+      throw err;
+    }
+  }
+
   async getUserInfoById(id: string): Promise<Account> {
     try {
       const userInfo: Account | null =

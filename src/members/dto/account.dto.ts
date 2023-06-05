@@ -39,3 +39,12 @@ export class RegisterAccountDto {
     );
   }
 }
+
+export class DeleteAccountDto {
+  @IsString()
+  private pw: string;
+
+  public getPw() {
+    return this.pw;
+  }
+}

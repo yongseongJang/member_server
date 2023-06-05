@@ -31,4 +31,14 @@ export class AccountRepository {
       throw err;
     }
   }
+
+  async deleteAccount(id: string): Promise<void> {
+    try {
+      await this.dataSource.transaction(async (manager) => {
+        return await manager.delete(Account, { id });
+      });
+    } catch (err) {
+      throw err;
+    }
+  }
 }
