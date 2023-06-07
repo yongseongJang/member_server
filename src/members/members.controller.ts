@@ -14,12 +14,37 @@ import {
 } from '@nestjs/common';
 import { Request, Response } from 'express';
 import { MembersService } from './members.service';
-import { RegisterAccountDto, DeleteAccountDto, LoginDto } from './dto';
+import {
+  RegisterAccountDto,
+  DeleteAccountDto,
+  LoginDto,
+  UserInfoDto,
+} from './dto';
 import { AuthGuard } from '../guards/auth.guard';
 
 @Controller('/api/members')
 export class MembersController {
   constructor(private membersService: MembersService) {}
+
+  @UseGuards(AuthGuard)
+  @Get()
+  async getUserInfo(@Req() req: Request, @Res() res: Response) {
+    try {
+      const userInfo = await this.membersService.getUserInfoById(
+        req['user'].id,
+      );
+
+      return res.status(HttpStatus.OK).send(UserInfoDto.from(userInfo));
+    } catch (err) {
+      throw new HttpException(
+        {
+          status: HttpStatus.BAD_REQUEST,
+          error: 'fail to get user info',
+        },
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+  }
 
   @Post()
   async registerAccount(@Body() registerAccountDto: RegisterAccountDto) {
