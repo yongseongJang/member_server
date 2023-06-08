@@ -32,6 +32,16 @@ export class AccountRepository {
     }
   }
 
+  async updateUserInfo(id: string, account: Account): Promise<void> {
+    try {
+      await this.dataSource.transaction(async (manager) => {
+        return await manager.update(Account, { id }, account);
+      });
+    } catch (err) {
+      throw err;
+    }
+  }
+
   async deleteAccount(id: string): Promise<void> {
     try {
       await this.dataSource.transaction(async (manager) => {

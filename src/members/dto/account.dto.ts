@@ -25,18 +25,24 @@ export class RegisterAccountDto {
     return this.pw;
   }
 
+  public getName() {
+    return this.name;
+  }
+
+  public getAddress() {
+    return this.address;
+  }
+
+  public getCellularPhone() {
+    return this.cellularPhone;
+  }
+
   public setPw(pw: string) {
     this.pw = pw;
   }
 
   public toEntity() {
-    return Account.from(
-      this.id,
-      this.pw,
-      this.name,
-      this.address,
-      this.cellularPhone,
-    );
+    return Account.fromRegisterAccountDto(this);
   }
 }
 

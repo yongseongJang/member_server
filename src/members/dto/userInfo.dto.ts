@@ -40,3 +40,30 @@ export class UserInfoDto {
     return userInfoDto;
   }
 }
+
+export class UpdateUserInfoDto {
+  @IsString()
+  private pw: string;
+
+  @IsString()
+  private address: string;
+
+  @IsString()
+  private cellularPhone: string;
+
+  public getPw() {
+    return this.pw;
+  }
+
+  public getAddress() {
+    return this.address;
+  }
+
+  public getCellularPhone() {
+    return this.cellularPhone;
+  }
+
+  public toEntity() {
+    return Account.fromUpdateUserInfoDto(this);
+  }
+}

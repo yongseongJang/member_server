@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { AccountRepository } from './repositories';
-import { LoginDto, RegisterAccountDto } from './dto';
+import { LoginDto, RegisterAccountDto, UpdateUserInfoDto } from './dto';
 import * as bcrypt from 'bcrypt';
 import { v4 } from 'uuid';
 import { Account } from './entity';
@@ -54,6 +54,21 @@ export class MembersService {
   async logout(id: string): Promise<void> {
     try {
       await this.redisService.del(id);
+    } catch (err) {
+      throw err;
+    }
+  }
+
+  async updateUserInfo(id: string, updateUserInfoDto: UpdateUserInfoDto) {
+    try {
+      const userInfo = await this.getUserInfoById(id);
+
+      await this.comparePasswordToHash(updateUserInfoDto.getPw(), userInfo.pw);
+
+      await this.accountRepository.updateUserInfo(
+        id,
+        updateUserInfoDto.toEntity(),
+      );
     } catch (err) {
       throw err;
     }

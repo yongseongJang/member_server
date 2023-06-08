@@ -1,5 +1,6 @@
 import { Entity, PrimaryColumn, Column, ManyToMany, OneToMany } from 'typeorm';
 import { Role } from '.';
+import { RegisterAccountDto, UpdateUserInfoDto } from '../dto';
 
 @Entity()
 export class Account {
@@ -59,19 +60,21 @@ export class Account {
   @ManyToMany((type) => Role, (roles) => roles._id, { cascade: true })
   roles: Role[];
 
-  static from(
-    id: string,
-    pw: string,
-    name: string,
-    address: string,
-    cellularPhone: string,
-  ) {
+  static fromRegisterAccountDto(registerAccountDto: RegisterAccountDto) {
     const account = new Account();
-    account.id = id;
-    account.pw = pw;
-    account.name = name;
-    account.address = address;
-    account.cellularPhone = cellularPhone;
+    account.id = registerAccountDto.getId();
+    account.pw = registerAccountDto.getPw();
+    account.name = registerAccountDto.getName();
+    account.address = registerAccountDto.getAddress();
+    account.cellularPhone = registerAccountDto.getCellularPhone();
+
+    return account;
+  }
+
+  static fromUpdateUserInfoDto(updateUserInfoDto: UpdateUserInfoDto) {
+    const account = new Account();
+    account.address = updateUserInfoDto.getAddress();
+    account.cellularPhone = updateUserInfoDto.getCellularPhone();
 
     return account;
   }

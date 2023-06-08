@@ -19,6 +19,7 @@ import {
   DeleteAccountDto,
   LoginDto,
   UserInfoDto,
+  UpdateUserInfoDto,
 } from './dto';
 import { AuthGuard } from '../guards/auth.guard';
 
@@ -47,9 +48,14 @@ export class MembersController {
   }
 
   @Post()
-  async registerAccount(@Body() registerAccountDto: RegisterAccountDto) {
+  async registerAccount(
+    @Res() res: Response,
+    @Body() registerAccountDto: RegisterAccountDto,
+  ) {
     try {
       await this.membersService.registerAccount(registerAccountDto);
+
+      return res.status(HttpStatus.OK).send();
     } catch (err) {
       throw new HttpException(
         {
@@ -62,7 +68,7 @@ export class MembersController {
   }
 
   @Post('/login')
-  async login(@Body() loginDto: LoginDto, @Res() res: Response) {
+  async login(@Res() res: Response, @Body() loginDto: LoginDto) {
     try {
       const { id, refreshToken, accessToken } = await this.membersService.login(
         loginDto,
@@ -108,6 +114,31 @@ export class MembersController {
           error: 'fail to logout',
         },
         HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  @UseGuards(AuthGuard)
+  @Patch()
+  async updateUserInfo(
+    @Req() req: Request,
+    @Res() res: Response,
+    @Body() updateUserInfoDto: UpdateUserInfoDto,
+  ) {
+    try {
+      await this.membersService.updateUserInfo(
+        req['user'].id,
+        updateUserInfoDto,
+      );
+
+      return res.status(HttpStatus.OK).send();
+    } catch (err) {
+      throw new HttpException(
+        {
+          status: HttpStatus.BAD_REQUEST,
+          error: 'fail to update user info',
+        },
+        HttpStatus.BAD_REQUEST,
       );
     }
   }
