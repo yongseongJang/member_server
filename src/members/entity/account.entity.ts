@@ -1,6 +1,10 @@
 import { Entity, PrimaryColumn, Column, ManyToMany, OneToMany } from 'typeorm';
 import { Role } from '.';
-import { RegisterAccountDto, UpdateUserInfoDto } from '../dto';
+import {
+  RegisterAccountDto,
+  UpdateUserInfoDto,
+  RegisterOAuthDto,
+} from '../dto';
 
 @Entity()
 export class Account {
@@ -67,6 +71,17 @@ export class Account {
     account.name = registerAccountDto.getName();
     account.address = registerAccountDto.getAddress();
     account.cellularPhone = registerAccountDto.getCellularPhone();
+
+    return account;
+  }
+
+  static fromRegisterOAuthDto(registerOAuthDto: RegisterOAuthDto) {
+    const account = new Account();
+    account.id = registerOAuthDto.getId();
+    account.pw = registerOAuthDto.getPw();
+    account.name = registerOAuthDto.getName();
+    account.address = registerOAuthDto.getAddress();
+    account.cellularPhone = registerOAuthDto.getCellularPhone();
 
     return account;
   }

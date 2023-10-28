@@ -20,12 +20,19 @@ import {
   LoginDto,
   UserInfoDto,
   UpdateUserInfoDto,
+  RegisterOAuthDto,
 } from './dto';
 import { AuthGuard } from '../guards/auth.guard';
+import { HttpService } from '@nestjs/axios';
+import { ConfigService } from '@nestjs/config';
 
 @Controller('/api/members')
 export class MembersController {
-  constructor(private membersService: MembersService) {}
+  constructor(
+    private membersService: MembersService,
+    private readonly httpService: HttpService,
+    private readonly configService: ConfigService,
+  ) {}
 
   @UseGuards(AuthGuard)
   @Get()
@@ -90,6 +97,125 @@ export class MembersController {
         {
           status: HttpStatus.BAD_REQUEST,
           error: 'fail to login',
+        },
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+  }
+
+  @Get('/naver-oauth')
+  async naverOAuth(@Req() req: Request, @Res() res: Response) {
+    try {
+      const api_url =
+        'https://nid.naver.com/oauth2.0/authorize?response_type=code&client_id=' +
+        this.configService.get('OAUTH_NAVER_CLIENT_ID') +
+        '&redirect_uri=' +
+        encodeURI('http://192.168.171.128:3000/api/members/naver-issue') +
+        '&state=' +
+        encodeURI(this.configService.get('OAUTH_NAVER_STATE'));
+
+      return res.status(HttpStatus.OK).send({ api_url });
+    } catch (err) {
+      throw new HttpException(
+        {
+          status: HttpStatus.BAD_REQUEST,
+          error: 'fail to naver social login',
+        },
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+  }
+
+  @Get('/naver-issue')
+  async naverIssue(@Req() req: Request, @Res() res: Response) {
+    try {
+      const client_id = this.configService.get('OAUTH_NAVER_CLIENT_ID');
+      const client_secret = this.configService.get('OAUTH_NAVER_CLIENT_SECRET');
+
+      const api_url =
+        'https://nid.naver.com/oauth2.0/token?grant_type=authorization_code&client_id=' +
+        client_id +
+        '&client_secret=' +
+        client_secret +
+        '&code=' +
+        req.query.code +
+        '&state=' +
+        req.query.state;
+
+      const options = {
+        headers: {
+          'X-Naver-Client-Id': client_id,
+          'X-Naver-Client-Secret': client_secret,
+        },
+      };
+
+      const response = await this.httpService.get(api_url, options).toPromise();
+
+      if (response.data.error) {
+        return res.status(response.data.error).send();
+      }
+
+      res.cookie('Naver_RefreshToken', response.data.refresh_token, {
+        httpOnly: true,
+      });
+      res.cookie('Naver_AccessToken', response.data.access_token, {
+        httpOnly: true,
+      });
+
+      return res.status(HttpStatus.OK).send();
+    } catch (err) {
+      throw new HttpException(
+        {
+          status: HttpStatus.BAD_REQUEST,
+          error: 'fail to issue token',
+        },
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+  }
+
+  @Post('/naver-register')
+  async naverRegister(
+    @Req() req: Request,
+    @Body() registerOAuthDto: RegisterOAuthDto,
+    @Res() res: Response,
+  ) {
+    try {
+      const option = {
+        headers: {
+          Authorization: 'Bearer ' + req.cookies['Naver_AccessToken'],
+        },
+      };
+
+      const response = await this.httpService
+        .get('https://openapi.naver.com/v1/nid/me', option)
+        .toPromise();
+
+      if (response.data.error) {
+        return res.status(response.data.error).send();
+      }
+
+      const id = response.data.response.id;
+      registerOAuthDto.setId(id);
+      const { refreshToken, accessToken } =
+        await this.membersService.registerOAuthAccount(registerOAuthDto);
+
+      res.cookie('UserId', id, {
+        httpOnly: true,
+      });
+      res.cookie('RefreshToken', refreshToken, {
+        httpOnly: true,
+      });
+      res.cookie('AccessToken', accessToken, {
+        httpOnly: true,
+      });
+
+      return res.status(HttpStatus.OK).send();
+    } catch (err) {
+      throw new HttpException(
+        {
+          status: HttpStatus.BAD_REQUEST,
+          error: 'fail to register oauth account',
         },
         HttpStatus.BAD_REQUEST,
       );

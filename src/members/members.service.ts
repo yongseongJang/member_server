@@ -1,6 +1,11 @@
 import { Injectable } from '@nestjs/common';
 import { AccountRepository } from './repositories';
-import { LoginDto, RegisterAccountDto, UpdateUserInfoDto } from './dto';
+import {
+  LoginDto,
+  RegisterAccountDto,
+  UpdateUserInfoDto,
+  RegisterOAuthDto,
+} from './dto';
 import * as bcrypt from 'bcrypt';
 import { v4 } from 'uuid';
 import { Account } from './entity';
@@ -24,6 +29,30 @@ export class MembersService {
       );
 
       await this.accountRepository.createAccount(registerAccountDto.toEntity());
+    } catch (err) {
+      throw err;
+    }
+  }
+
+  async registerOAuthAccount(registerOAuthDto: RegisterOAuthDto): Promise<{
+    refreshToken: string;
+    accessToken: string;
+  }> {
+    try {
+      const id = registerOAuthDto.getId();
+      await this.checkIdDuplication(id);
+
+      registerOAuthDto.setPw(await this.hashPassword(id));
+
+      await this.accountRepository.createAccount(registerOAuthDto.toEntity());
+
+      const accessToken = await this.jwtService.signAsync({
+        id,
+      });
+      const refreshToken = v4();
+      await this.redisService.set(id, refreshToken, 14 * 24 * 60 * 60);
+
+      return { refreshToken, accessToken };
     } catch (err) {
       throw err;
     }

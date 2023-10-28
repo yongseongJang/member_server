@@ -7,6 +7,7 @@ import { MembersService } from './members.service';
 import { Account, Role, Authority } from './entity';
 import { AccountRepository } from './repositories';
 import { RedisModule } from 'src/redis.module';
+import { HttpModule } from '@nestjs/axios';
 
 @Module({
   imports: [
@@ -23,6 +24,7 @@ import { RedisModule } from 'src/redis.module';
         };
       },
     }),
+    HttpModule,
   ],
   controllers: [MembersController],
   providers: [MembersService, AccountRepository],
