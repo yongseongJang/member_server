@@ -7,6 +7,11 @@ export class LoginDto {
   @IsString()
   private pw: string;
 
+  constructor(id: string, pw: string) {
+    this.id = id;
+    this.pw = pw;
+  }
+
   public getId() {
     return this.id;
   }

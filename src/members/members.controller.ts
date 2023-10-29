@@ -110,7 +110,7 @@ export class MembersController {
         'https://nid.naver.com/oauth2.0/authorize?response_type=code&client_id=' +
         this.configService.get('OAUTH_NAVER_CLIENT_ID') +
         '&redirect_uri=' +
-        encodeURI('http://192.168.171.128:3000/api/members/naver-issue') +
+        encodeURI(this.configService.get('OAUTH_REDIRECT_URI')) +
         '&state=' +
         encodeURI(this.configService.get('OAUTH_NAVER_STATE'));
 
@@ -149,21 +149,66 @@ export class MembersController {
         },
       };
 
-      const response = await this.httpService.get(api_url, options).toPromise();
+      const tokenInfo = await this.httpService
+        .get(api_url, options)
+        .toPromise();
 
-      if (response.data.error) {
-        return res.status(response.data.error).send();
+      if (tokenInfo.data.error) {
+        return res.status(tokenInfo.data.error).send();
       }
 
-      res.cookie('Naver_RefreshToken', response.data.refresh_token, {
+      res.cookie('Naver_RefreshToken', tokenInfo.data.refresh_token, {
         httpOnly: true,
       });
-      res.cookie('Naver_AccessToken', response.data.access_token, {
+      res.cookie('Naver_AccessToken', tokenInfo.data.access_token, {
         httpOnly: true,
       });
 
-      return res.status(HttpStatus.OK).send();
+      const option = {
+        headers: {
+          Authorization: 'Bearer ' + tokenInfo.data.access_token,
+        },
+      };
+
+      const userInfo = await this.httpService
+        .get('https://openapi.naver.com/v1/nid/me', option)
+        .toPromise();
+
+      if (userInfo.data.error) {
+        return res.status(userInfo.data.error).send();
+      }
+
+      try {
+        const { id, refreshToken, accessToken } =
+          await this.membersService.login(
+            new LoginDto(userInfo.data.response.id, userInfo.data.response.id),
+          );
+
+        res.cookie('UserId', id, {
+          httpOnly: true,
+        });
+        res.cookie('RefreshToken', refreshToken, {
+          httpOnly: true,
+        });
+        res.cookie('AccessToken', accessToken, {
+          httpOnly: true,
+        });
+
+        return res.status(HttpStatus.OK).send();
+      } catch (err) {
+        throw new HttpException(
+          {
+            status: HttpStatus.MOVED_PERMANENTLY,
+            error: 'register user info',
+          },
+          HttpStatus.MOVED_PERMANENTLY,
+        );
+      }
     } catch (err) {
+      if (err.status === 301) {
+        throw err;
+      }
+
       throw new HttpException(
         {
           status: HttpStatus.BAD_REQUEST,
